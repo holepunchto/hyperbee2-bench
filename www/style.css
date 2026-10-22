@@ -1,0 +1,30 @@
+html {
+    font-family: sans-serif;
+    width: 92ch;
+    margin: 3em auto;
+}
+
+h2 {
+    font-size: 120%;
+    margin: 3em 0;
+}
+
+h3 {
+    font-weight: bold;
+    font-size: 100%;
+    margin: 2em 0;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: fit-content(40%) auto;
+    grid-column-gap: 2em;
+}
+
+dt {
+    margin: 0;
+}
+
+dd {
+    margin: 0;
+}
