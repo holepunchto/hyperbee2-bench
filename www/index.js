@@ -1,6 +1,7 @@
 import index from "./results/index" with { type: 'text' };
 
 const MAX_FILES = 6;
+const FORMAT = 1;
 
 const entries = [];
 
@@ -23,7 +24,12 @@ for (const f of files) {
     continue;
   }
   const data = await res.json();
-  entries.push(data);
+  // Skip incompatible file formats
+  if (data.format === FORMAT) {
+    entries.push(data);
+  } else {
+    console.warn(`Skipping incompatible file format ${url} (version ${data.format})`);
+  }
 }
 
 const chartsDiv = document.getElementById('charts');
@@ -56,34 +62,50 @@ for (const entry of entries) {
   for (const result of entry.results) {
     if (!charts[result.name]) {
       charts[result.name] = {
-        data: {
-          columns: [],
-          type: 'bar',
-        }
+        series: [
+          {
+            name: 'Operation time (ns)',
+            data: [],
+          },
+        ],
+        chart: {
+          type: 'violin',
+          height: 460,
+        },
+        title: {
+          text: 'Operation time (ns)',
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true,
+            distributed: true,
+          },
+          violin: {
+            normalize: 'group',
+            points: { show: false },
+          },
+        },
+        // colors: ['#14b8a6', '#3B82F6', '#f59e0b', '#ef4444'],
+        //stroke: { width: 1, colors: ['#888'] },
+        legend: { show: false },
+        xaxis: {
+          title: { text: 'Operation time (ns)' },
+        },
       };
     }
     const chart = charts[result.name];
-    const columns = chart.data.columns;
+    const data = chart.series[0].data;
     const label = `${entry.package.name} ${entry.package.version} (${entry.commit.substring(0, 7)})`;
-    let i = 0;
-    for (; i < columns.length; i++) {
-      if (columns[i][0] === label) break;
-    }
-    if (i === columns.length) {
-      columns.push([label]);
-    }
-    columns[i].push(result.histogram.mean);
+    data.push({ x: label, y: {density: result.linearBuckets} });
   }
 }
 
 console.log(charts);
 
 for (const name in charts) {
-  const chart = charts[name];
-  const h3 = document.createElement('h3');
-  h3.textContent = `${name} - mean operation time (ns)`;
-  chartsDiv.append(h3);
-  chart.bindto = document.createElement('div');
-  chartsDiv.appendChild(chart.bindto);
-  bb.generate(chart);
+  const el = document.createElement('div');
+  chartsDiv.appendChild(el);
+  const options = charts[name];
+  const chart = new ApexCharts(el, options);
+  chart.render();
 }

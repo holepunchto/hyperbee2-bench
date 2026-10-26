@@ -142,6 +142,7 @@ const outputPath = path.resolve(resultsDir, outputFile);
 console.log(`Writing: ${path.relative(process.cwd(), outputPath)}`);
 
 fs.writeFileSync(outputPath, JSON.stringify({
+  format: 1,
   date: now.toISOString(),
   package: {
     name,
