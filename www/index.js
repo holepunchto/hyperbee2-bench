@@ -65,12 +65,13 @@ for (const entry of entries) {
         series: [
           {
             name: 'Operation time (ns)',
+            type: 'boxPlot',
             data: [],
           },
         ],
         chart: {
-          type: 'violin',
-          height: 460,
+          type: 'boxPlot',
+          height: 350,
         },
         title: {
           text: 'Operation time (ns)',
@@ -78,11 +79,12 @@ for (const entry of entries) {
         plotOptions: {
           bar: {
             horizontal: true,
-            distributed: true,
           },
-          violin: {
-            normalize: 'group',
-            points: { show: false },
+          boxPlot: {
+            colors: {
+              upper: '#5C4742',
+              lower: '#A5978B',
+            },
           },
         },
         // colors: ['#14b8a6', '#3B82F6', '#f59e0b', '#ef4444'],
@@ -96,7 +98,13 @@ for (const entry of entries) {
     const chart = charts[result.name];
     const data = chart.series[0].data;
     const label = `${entry.package.name} ${entry.package.version} (${entry.commit.substring(0, 7)})`;
-    data.push({ x: label, y: {density: result.linearBuckets} });
+    data.push({x: label, y: [
+        result.percentiles['1'],
+        result.percentiles['25'],
+        result.percentiles['50'],
+        result.percentiles['75'],
+        result.percentiles['99'],
+    ]});
   }
 }
 

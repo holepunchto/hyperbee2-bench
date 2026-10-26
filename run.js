@@ -70,39 +70,39 @@ async function defaultTeardown() {
 
 const results = [];
 
-results.push(await bench({
-  name: 'Insert (batch size 1)',
-  count: 100_000,
-  warmup: 20_000,
-  setup: defaultSetup,
-  teardown: defaultTeardown,
-  async cycle() {
-    const batch = this.bee.write();
-    const key = crypto.randomBytes(32);
-    batch.tryPut(key, key);
-    await batch.flush();
-  },
-}));
+// results.push(await bench({
+//   name: 'Insert (batch size 1)',
+//   count: 100_000,
+//   warmup: 20_000,
+//   setup: defaultSetup,
+//   teardown: defaultTeardown,
+//   async cycle() {
+//     const batch = this.bee.write();
+//     const key = crypto.randomBytes(32);
+//     batch.tryPut(key, key);
+//     await batch.flush();
+//   },
+// }));
 
-results.push(await bench({
-  name: 'Insert (batch size 100)',
-  count: 100_000,
-  warmup: 20_000,
-  setup() {
-    defaultSetup.call(this);
-    this.i = 0;
-    this.batch = this.bee.write();
-  },
-  teardown: defaultTeardown,
-  async cycle() {
-    if (++this.i % 100 === 0) {
-      await this.batch.flush();
-      this.batch = this.bee.write();
-    }
-    const key = crypto.randomBytes(32);
-    this.batch.tryPut(key, key);
-  },
-}));
+// results.push(await bench({
+//   name: 'Insert (batch size 100)',
+//   count: 100_000,
+//   warmup: 20_000,
+//   setup() {
+//     defaultSetup.call(this);
+//     this.i = 0;
+//     this.batch = this.bee.write();
+//   },
+//   teardown: defaultTeardown,
+//   async cycle() {
+//     if (++this.i % 100 === 0) {
+//       await this.batch.flush();
+//       this.batch = this.bee.write();
+//     }
+//     const key = crypto.randomBytes(32);
+//     this.batch.tryPut(key, key);
+//   },
+// }));
 
 results.push(await bench({
   name: 'Insert (batch size 1000)',
