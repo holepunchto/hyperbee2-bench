@@ -57,69 +57,112 @@ for (const entry of entries) {
   metadata('Date', entry.date)
 }
 
+// TODO: repeated in lib/util.js
+function zeroPad(s, n) {
+  s = '' + s
+  n -= s.length
+  while (n > 0) {
+    s = '0' + s
+    n--;
+  }
+  return s;
+}
+
 const charts = {};
+const keyDistributions = {};
 for (const entry of entries) {
   for (const result of entry.results) {
     if (!charts[result.name]) {
+      const keyCategories = [];
+      for (let i = 0; i < 16; i++) {
+        keyCategories.push(i.toString(16));
+      }
       charts[result.name] = {
-        series: [
-          {
-            name: 'Operation time (ns)',
-            type: 'boxPlot',
-            data: [],
+        durations: {
+          series: [
+            {
+              name: 'Operation time (ns)',
+              data: [],
+            },
+          ],
+          chart: {
+            type: 'violin',
+            height: 350,
           },
-        ],
-        chart: {
-          type: 'boxPlot',
-          height: 350,
-        },
-        title: {
-          text: result.name,
-        },
-        plotOptions: {
-          bar: {
-            horizontal: true,
+          title: {
+            text: result.name,
           },
-          boxPlot: {
-            colors: {
-              upper: '#5C4742',
-              lower: '#A5978B',
+          plotOptions: {
+            bar: {
+              horizontal: true,
+              // Give each catgory its own color
+              distributed: true
+            },
+            violin: {
+              // scale each violin to its own peak regardless of sample size
+              normalize: 'group',
+              points: {
+                // do not plot individual points on top
+                show: false,
+              }
             },
           },
+          legend: { show: false },
+          xaxis: {
+            title: { text: 'Operation time (ns)' },
+          },
         },
-        // colors: ['#14b8a6', '#3B82F6', '#f59e0b', '#ef4444'],
-        //stroke: { width: 1, colors: ['#888'] },
-        legend: { show: false },
-        xaxis: {
-          title: { text: 'Operation time (ns)' },
-        },
+        keyDistribution: {
+          series: [
+            {
+              name: 'Keys starting with nibble',
+              data: result.keyDistribution,
+              color: '#cccccc',
+            }
+          ],
+          title: {
+            text: `${result.name} - key distribution by first nibble`,
+          },
+          chart: {
+            type: 'bar',
+            height: 350,
+          },
+          dataLabels: {
+            enabled: false,
+          },
+          xaxis: {
+            categories: keyCategories
+          },
+          yaxis: {
+            max: result.histogram.count
+          }
+        }
       };
     }
     const chart = charts[result.name];
-    const data = chart.series[0].data;
-    const label = `${entry.package.name} ${entry.package.version} (${entry.commit.short})`;
-    // Calculate inter quartile range
-    const iqr = result.percentiles['75'] - result.percentiles['25'];
-    // Exclude outliers. Otherwise, min/max will make the box plot so wide
-    // it's hard to see the box.
-    const lowerFence = result.percentiles['25'] - 3 * iqr;
-    const upperFence = result.percentiles['75'] + 3 * iqr;
-    data.push({x: label, y: [
-        Math.max(result.histogram.min, lowerFence),
-        result.percentiles['25'],
-        result.percentiles['50'],
-        result.percentiles['75'],
-        Math.min(result.histogram.max, upperFence),
-    ]});
+    const data = chart.durations.series[0].data;
+    const label = `${entry.package.version} (${entry.commit.short})`;
+    data.push({x: label, y: { density: result.buckets }});
+
+    if (!keyDistributions[result.name]) {
+      keyDistributions[result.name] = result.keyDistribution;
+    }
   }
 }
 
 console.log(charts);
 
 for (const name in charts) {
-  const el = document.createElement('div');
-  chartsDiv.appendChild(el);
-  const options = charts[name];
-  const chart = new ApexCharts(el, options);
-  chart.render();
+  {
+    const el = document.createElement('div');
+    chartsDiv.appendChild(el);
+    const durations = new ApexCharts(el, charts[name].durations);
+    durations.render();
+  }
+  {
+    const el = document.createElement('div');
+    chartsDiv.appendChild(el);
+    const keydist = new ApexCharts(el, charts[name].keyDistribution);
+    keydist.render();
+  }
 }
