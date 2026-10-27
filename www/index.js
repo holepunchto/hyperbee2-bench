@@ -1,7 +1,7 @@
 import index from "./results/index" with { type: 'text' };
 
 const MAX_FILES = 6;
-const FORMAT = 1;
+const FORMAT = 2;
 
 const entries = [];
 
@@ -53,7 +53,7 @@ for (const entry of entries) {
 
   metadata('Runtime', `${entry.runtime.name} ${entry.runtime.version}`);
   metadata('Package', `${entry.package.name} v${entry.package.version}`);
-  metadata('Commit', entry.commit)
+  metadata('Commit', entry.commit.full)
   metadata('Date', entry.date)
 }
 
@@ -74,7 +74,7 @@ for (const entry of entries) {
           height: 350,
         },
         title: {
-          text: 'Operation time (ns)',
+          text: result.name,
         },
         plotOptions: {
           bar: {
@@ -97,7 +97,7 @@ for (const entry of entries) {
     }
     const chart = charts[result.name];
     const data = chart.series[0].data;
-    const label = `${entry.package.name} ${entry.package.version} (${entry.commit.substring(0, 7)})`;
+    const label = `${entry.package.name} ${entry.package.version} (${entry.commit.short})`;
     data.push({x: label, y: [
         result.percentiles['1'],
         result.percentiles['25'],
