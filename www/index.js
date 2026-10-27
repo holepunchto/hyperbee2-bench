@@ -98,12 +98,18 @@ for (const entry of entries) {
     const chart = charts[result.name];
     const data = chart.series[0].data;
     const label = `${entry.package.name} ${entry.package.version} (${entry.commit.short})`;
+    // Calculate inter quartile range
+    const iqr = result.percentiles['75'] - result.percentiles['25'];
+    // Exclude outliers. Otherwise, min/max will make the box plot so wide
+    // it's hard to see the box.
+    const lowerFence = result.percentiles['25'] - 3 * iqr;
+    const upperFence = result.percentiles['75'] + 3 * iqr;
     data.push({x: label, y: [
-        result.percentiles['1'],
+        Math.max(result.histogram.min, lowerFence),
         result.percentiles['25'],
         result.percentiles['50'],
         result.percentiles['75'],
-        result.percentiles['99'],
+        Math.min(result.histogram.max, upperFence),
     ]});
   }
 }
