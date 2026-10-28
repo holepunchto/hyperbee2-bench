@@ -28,3 +28,17 @@ dt {
 dd {
     margin: 0;
 }
+
+section {
+    padding: 1em;
+    margin: 1em;
+    border: 1px solid #ccc;
+}
+
+h3 {
+    background: #eee;
+    border-bottom: 1px solid #ccc;
+    display: block;
+    margin: -1em -1em 1em -1em;
+    padding: 1em;
+}

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { bench } from "../lib/bench.js";
 import { randomGenerators, KeyGenerator } from "../lib/keygen.js";
 
-export async function run(Corestore, Hyperbee, results) {
+export async function run(Corestore, Hyperbee, groups) {
 
   function setup(rand) {
     return async function () {
@@ -29,6 +29,7 @@ export async function run(Corestore, Hyperbee, results) {
       };
 
       this.keygen = new KeyGenerator(rand.generate);
+      this.result.keyGenerator = rand.name;
     };
   }
 
@@ -45,10 +46,12 @@ export async function run(Corestore, Hyperbee, results) {
     this.result.keyDistribution = this.keygen.buckets;
   }
 
+  const group = {name: 'Insert', results: []};
+  const results = group.results;
   for (const rand of randomGenerators) {
     for (const batchSize of [1000, 100, 1]) {
       results.push(await bench({
-        name: `Insert (batch size ${batchSize}) - ${rand.name}`,
+        name: `${rand.name} key generator, batch size = ${batchSize}`,
         count: 100_000,
         warmup: 20_000,
         setup: setup(rand),
@@ -68,4 +71,5 @@ export async function run(Corestore, Hyperbee, results) {
     }
   }
 
+  groups.push(group);
 }

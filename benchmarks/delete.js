@@ -3,7 +3,7 @@ import path from 'node:path';
 import { bench } from "../lib/bench.js";
 import { randomGenerators, KeyGenerator } from "../lib/keygen.js";
 
-export async function run(Corestore, Hyperbee, results) {
+export async function run(Corestore, Hyperbee, groups) {
 
   function setup(initialCount, rand) {
     return async function () {
@@ -18,11 +18,14 @@ export async function run(Corestore, Hyperbee, results) {
       await this.bee.ready()
 
       this.keygen = new KeyGenerator(rand.generate);
+      this.result.keyGenerator = rand.name;
 
       // Insert initial data
       const batch = this.bee.write();
+      this.keys = [];
       for (let i = 0; i < initialCount; i++) {
         const key = this.keygen.generateBytes(32);
+        this.keys.push(key);
         batch.tryPut(key, key);
       }
       await batch.flush();
@@ -53,27 +56,30 @@ export async function run(Corestore, Hyperbee, results) {
     this.result.keyDistribution = this.keygen.buckets;
   }
 
+  const group = {name: 'Delete', results: []};
+  const results = group.results;
   for (const rand of randomGenerators) {
     for (const batchSize of [1000, 100, 1]) {
       results.push(await bench({
-        name: `Delete (batch size ${batchSize}) - ${rand.name}`,
+        name: `${rand.name} key generator, batch size = ${batchSize}`,
         count: 100_000,
         warmup: 20_000,
         setup: setup(120_000, rand),
         teardown,
         bucketSize: ({
           1: 2000,
-          100: 100,
-          1000: 100,
+          100: 10,
+          1000: 10,
         }[batchSize]),
         async cycle() {
           await this.withBatch(batchSize, batch => {
-            const key = this.keygen.generateBytes(32);
-            batch.tryPut(key, key);
+            const key = this.keys.pop();
+            batch.tryDelete(key, key);
           });
         },
       }));
     }
   }
 
+  groups.push(group);
 }

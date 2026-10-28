@@ -25,13 +25,13 @@ console.log('');
 const Corestore = (await import(path.resolve(dir, './node_modules/corestore/index.js'))).default;
 const Hyperbee = (await import(path.resolve(dir, './index.js'))).default;
 
-const results = [];
+const groups = [];
 
 async function runBenchmark(filename) {
-  await (await import(filename)).run(Corestore, Hyperbee, results);
+  await (await import(filename)).run(Corestore, Hyperbee, groups);
 }
 
 await runBenchmark('./benchmarks/insert.js');
 await runBenchmark('./benchmarks/delete.js');
 
-writeResults(name, version, commit, results);
+writeResults(name, version, commit, groups);
