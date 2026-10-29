@@ -135,71 +135,28 @@ for (const entry of entries) {
               max: result.histogram.count
             }
           },
-          peakHeapUsed: {
+          peakMemory: {
             series: [
-              {
-                name: 'Peak heap used (bytes)',
-                data: [],
-              },
+              { name: 'Heap used', data: [], },
+              { name: 'External', data: [], },
+              { name: 'Array buffers', data: [], },
             ],
+            xaxis: {
+              categories: [],
+            },
             chart: {
               type: 'bar',
               height: 350,
+              stacked: true,
             },
             title: {
-              text: 'Peak heap used (bytes)',
+              text: 'Memory use (bytes)',
             },
             plotOptions: {
               bar: {
-                horizontal: false,
+                horizontal: true,
                 // Give each catgory its own color
-                distributed: true
-              },
-            },
-            legend: { show: false },
-          },
-          peakExternal: {
-            series: [
-              {
-                name: 'Peak external (bytes)',
-                data: [],
-              },
-            ],
-            chart: {
-              type: 'bar',
-              height: 350,
-            },
-            title: {
-              text: 'Peak external (bytes)',
-            },
-            plotOptions: {
-              bar: {
-                horizontal: false,
-                // Give each catgory its own color
-                distributed: true
-              },
-            },
-            legend: { show: false },
-          },
-          peakArrayBuffers: {
-            series: [
-              {
-                name: 'Peak array buffers (bytes)',
-                data: [],
-              },
-            ],
-            chart: {
-              type: 'bar',
-              height: 350,
-            },
-            title: {
-              text: 'Peak array buffers (bytes)',
-            },
-            plotOptions: {
-              bar: {
-                horizontal: false,
-                // Give each catgory its own color
-                distributed: true
+                // distributed: true
               },
             },
             legend: { show: false },
@@ -210,12 +167,11 @@ for (const entry of entries) {
       const durations = chart.durations.series[0].data;
       const label = `${entry.package.version} (${entry.commit.short})`;
       durations.push({x: label, y: { density: result.buckets }});
-      const peakHeapUsed = chart.peakHeapUsed.series[0].data;
-      peakHeapUsed.push({x: label, y: result.memory.peakHeapUsed});
-      const peakExternal = chart.peakExternal.series[0].data;
-      peakExternal.push({x: label, y: result.memory.peakExternal});
-      const peakArrayBuffers = chart.peakArrayBuffers.series[0].data;
-      peakArrayBuffers.push({x: label, y: result.memory.peakArrayBuffers});
+      const peakMemory = chart.peakMemory.series;
+      peakMemory[0].data.push(result.memory.peakHeapUsed);
+      peakMemory[1].data.push(result.memory.peakExternal);
+      peakMemory[2].data.push(result.memory.peakArrayBuffers);
+      chart.peakMemory.xaxis.categories.push(label);
     }
   }
 }
@@ -229,7 +185,7 @@ for (const group in chartGroups) {
   for (const name in charts) {
     const section = document.createElement('section');
     const h3 = document.createElement('h3');
-    h3.textContent = name;
+    h3.textContent = `[${group}] ${name}`;
     section.appendChild(h3);
     chartsDiv.appendChild(section);
     for (const options of Object.values(charts[name])) {
