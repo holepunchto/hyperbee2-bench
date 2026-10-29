@@ -1,4 +1,5 @@
 import index from "./results/index" with { type: 'text' };
+import {formatNanoseconds, humanizeBytes} from "./util.js";
 
 const MAX_FILES = 6;
 const FORMAT = 5;
@@ -82,7 +83,7 @@ for (const entry of entries) {
           durations: {
             series: [
               {
-                name: 'Operation time (ns)',
+                name: 'Operation time',
                 data: [],
               },
             ],
@@ -91,7 +92,7 @@ for (const entry of entries) {
               height: 350,
             },
             title: {
-              text: 'Operation time (ns)',
+              text: 'Operation time',
             },
             plotOptions: {
               bar: {
@@ -109,6 +110,17 @@ for (const entry of entries) {
               },
             },
             legend: { show: false },
+            xaxis: {
+              labels: {
+                formatter: formatNanoseconds,
+              }
+            },
+            dataLabels: {
+              formatter: formatNanoseconds,
+            },
+            tooltip: {
+              enabled: false,
+            },
           },
           keyDistribution: {
             series: [
@@ -143,6 +155,17 @@ for (const entry of entries) {
             ],
             xaxis: {
               categories: [],
+              labels: {
+                formatter: humanizeBytes,
+              }
+            },
+            dataLabels: {
+              formatter: humanizeBytes,
+            },
+            tooltip: {
+              y: {
+                formatter: humanizeBytes,
+              },
             },
             chart: {
               type: 'bar',
@@ -150,7 +173,7 @@ for (const entry of entries) {
               stacked: true,
             },
             title: {
-              text: 'Peak memory use in each category (bytes)',
+              text: 'Peak memory use in each category',
             },
             plotOptions: {
               bar: {
@@ -163,14 +186,14 @@ for (const entry of entries) {
           },
           coreSize: {
             series: [
-              { name: 'Core size (bytes)', data: [], },
+              { name: 'Core size', data: [], },
             ],
             chart: {
               type: 'bar',
               height: 350,
             },
             title: {
-              text: 'Core size (bytes)',
+              text: 'Core size',
             },
             plotOptions: {
               bar: {
@@ -180,17 +203,30 @@ for (const entry of entries) {
               },
             },
             legend: { show: false },
+            xaxis: {
+              labels: {
+                formatter: humanizeBytes,
+              }
+            },
+            dataLabels: {
+              formatter: humanizeBytes,
+            },
+            tooltip: {
+              y: {
+                formatter: humanizeBytes,
+              },
+            },
           },
           diskUse: {
             series: [
-              { name: 'Disk use (bytes)', data: [], },
+              { name: 'Disk use', data: [], },
             ],
             chart: {
               type: 'bar',
               height: 350,
             },
             title: {
-              text: 'Disk use (bytes)',
+              text: 'Disk use',
             },
             plotOptions: {
               bar: {
@@ -200,6 +236,19 @@ for (const entry of entries) {
               },
             },
             legend: { show: false },
+            xaxis: {
+              labels: {
+                formatter: humanizeBytes,
+              }
+            },
+            dataLabels: {
+              formatter: humanizeBytes,
+            },
+            tooltip: {
+              y: {
+                formatter: humanizeBytes,
+              },
+            },
           },
         };
       }
