@@ -1,20 +1,12 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import cluster from 'node:cluster';
 import { bench } from "../lib/bench.js";
 import { randomGenerators, KeyGenerator } from "../lib/keygen.js";
 
 function setup(rand) {
-  return async function (Corestore, Hyperbee, sandbox) {
-    fs.rmSync(sandbox, { recursive: true, force: true })
-    fs.mkdirSync(sandbox, { recursive: true })
-
-    this.store = new Corestore(sandbox)
-    this.bee = new Hyperbee(this.store, { 
-      core: this.store.get({ name: 'docindex' }),
-    })
-    await this.bee.ready()
-
+  return async function (store, bee, sandbox) {
+    this.store = store;
+    this.bee = bee;
     this.ops = 0;
     this.batch = this.bee.write();
     this.withBatch = async (size, cb) => {
@@ -38,9 +30,6 @@ async function teardown() {
     console.warn('Flushing remaining ops as final batch (', this.ops, ')');
     await this.batch.flush();
   }
-  await this.bee.close();
-  await this.store.close();
-
   this.result.keyDistribution = this.keygen.buckets;
 }
 

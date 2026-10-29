@@ -161,6 +161,26 @@ for (const entry of entries) {
             },
             legend: { show: false },
           },
+          coreSize: {
+            series: [
+              { name: 'Core size (bytes)', data: [], },
+            ],
+            chart: {
+              type: 'bar',
+              height: 350,
+            },
+            title: {
+              text: 'Core size (bytes)',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: true,
+                // Give each catgory its own color
+                distributed: true
+              },
+            },
+            legend: { show: false },
+          },
           diskUse: {
             series: [
               { name: 'Disk use (bytes)', data: [], },
@@ -194,6 +214,8 @@ for (const entry of entries) {
       chart.peakMemory.xaxis.categories.push(label);
       const diskUse = chart.diskUse.series[0].data;
       diskUse.push({x: label, y: result.disk});
+      const coreSize = chart.coreSize.series[0].data;
+      coreSize.push({x: label, y: result.coreSize});
     }
   }
 }
