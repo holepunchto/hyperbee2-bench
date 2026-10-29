@@ -137,9 +137,9 @@ for (const entry of entries) {
           },
           peakMemory: {
             series: [
-              { name: 'Heap used', data: [], },
-              { name: 'External', data: [], },
-              { name: 'Array buffers', data: [], },
+              { name: 'Max heap used', data: [], },
+              { name: 'Max external', data: [], },
+              { name: 'Max array buffers', data: [], },
             ],
             xaxis: {
               categories: [],
@@ -150,7 +150,7 @@ for (const entry of entries) {
               stacked: true,
             },
             title: {
-              text: 'Memory use (bytes)',
+              text: 'Peak memory use in each category (bytes)',
             },
             plotOptions: {
               bar: {
