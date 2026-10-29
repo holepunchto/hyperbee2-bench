@@ -1,7 +1,7 @@
 import index from "./results/index" with { type: 'text' };
 
 const MAX_FILES = 6;
-const FORMAT = 3;
+const FORMAT = 4;
 
 const entries = [];
 
@@ -134,13 +134,88 @@ for (const entry of entries) {
             yaxis: {
               max: result.histogram.count
             }
-          }
+          },
+          peakHeapUsed: {
+            series: [
+              {
+                name: 'Peak heap used (bytes)',
+                data: [],
+              },
+            ],
+            chart: {
+              type: 'bar',
+              height: 350,
+            },
+            title: {
+              text: 'Peak heap used (bytes)',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: false,
+                // Give each catgory its own color
+                distributed: true
+              },
+            },
+            legend: { show: false },
+          },
+          peakExternal: {
+            series: [
+              {
+                name: 'Peak external (bytes)',
+                data: [],
+              },
+            ],
+            chart: {
+              type: 'bar',
+              height: 350,
+            },
+            title: {
+              text: 'Peak external (bytes)',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: false,
+                // Give each catgory its own color
+                distributed: true
+              },
+            },
+            legend: { show: false },
+          },
+          peakArrayBuffers: {
+            series: [
+              {
+                name: 'Peak array buffers (bytes)',
+                data: [],
+              },
+            ],
+            chart: {
+              type: 'bar',
+              height: 350,
+            },
+            title: {
+              text: 'Peak array buffers (bytes)',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: false,
+                // Give each catgory its own color
+                distributed: true
+              },
+            },
+            legend: { show: false },
+          },
         };
       }
       const chart = charts[result.name];
-      const data = chart.durations.series[0].data;
+      const durations = chart.durations.series[0].data;
       const label = `${entry.package.version} (${entry.commit.short})`;
-      data.push({x: label, y: { density: result.buckets }});
+      durations.push({x: label, y: { density: result.buckets }});
+      const peakHeapUsed = chart.peakHeapUsed.series[0].data;
+      peakHeapUsed.push({x: label, y: result.memory.peakHeapUsed});
+      const peakExternal = chart.peakExternal.series[0].data;
+      peakExternal.push({x: label, y: result.memory.peakExternal});
+      const peakArrayBuffers = chart.peakArrayBuffers.series[0].data;
+      peakArrayBuffers.push({x: label, y: result.memory.peakArrayBuffers});
     }
   }
 }
@@ -157,17 +232,11 @@ for (const group in chartGroups) {
     h3.textContent = name;
     section.appendChild(h3);
     chartsDiv.appendChild(section);
-    {
+    for (const options of Object.values(charts[name])) {
       const el = document.createElement('div');
       section.appendChild(el);
-      const durations = new ApexCharts(el, charts[name].durations);
-      durations.render();
-    }
-    {
-      const el = document.createElement('div');
-      section.appendChild(el);
-      const keydist = new ApexCharts(el, charts[name].keyDistribution);
-      keydist.render();
+      const c = new ApexCharts(el, options);
+      c.render();
     }
   }
 }

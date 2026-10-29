@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import process from 'node:process';
+import cluster from 'node:cluster';
 import fs from 'node:fs';
 import path from 'node:path';
 import { writeResults } from "./lib/write.js";
@@ -22,13 +23,21 @@ console.log(`Package: ${name} v${version}`);
 console.log(`Runtime: ${process.title} ${process.version}`);
 console.log('');
 
-const Corestore = (await import(path.resolve(dir, './node_modules/corestore/index.js'))).default;
-const Hyperbee = (await import(path.resolve(dir, './index.js'))).default;
-
 const groups = [];
 
-async function runBenchmark(filename) {
-  await (await import(filename)).run(Corestore, Hyperbee, groups);
+function runBenchmark(filename) {
+  return new Promise((resolve, reject) => {
+    cluster.setupPrimary({
+      exec: filename,
+      args: [dir],
+    });
+    const worker = cluster.fork();
+    worker.once('exit', resolve);
+    worker.once('error', reject);
+    worker.on('message', msg => {
+      groups.push(msg);
+    });
+  });
 }
 
 await runBenchmark('./benchmarks/insert.js');
