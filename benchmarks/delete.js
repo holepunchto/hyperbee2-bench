@@ -5,8 +5,7 @@ import { bench } from "../lib/bench.js";
 import { randomGenerators, KeyGenerator } from "../lib/keygen.js";
 
 function setup(initialCount, rand) {
-  return async function (Corestore, Hyperbee) {
-    const sandbox = path.join(import.meta.dirname, '../sandbox')
+  return async function (Corestore, Hyperbee, sandbox) {
     fs.rmSync(sandbox, { recursive: true, force: true })
     fs.mkdirSync(sandbox, { recursive: true })
 

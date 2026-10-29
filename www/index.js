@@ -1,7 +1,7 @@
 import index from "./results/index" with { type: 'text' };
 
 const MAX_FILES = 6;
-const FORMAT = 4;
+const FORMAT = 5;
 
 const entries = [];
 
@@ -161,6 +161,26 @@ for (const entry of entries) {
             },
             legend: { show: false },
           },
+          diskUse: {
+            series: [
+              { name: 'Disk use (bytes)', data: [], },
+            ],
+            chart: {
+              type: 'bar',
+              height: 350,
+            },
+            title: {
+              text: 'Disk use (bytes)',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: true,
+                // Give each catgory its own color
+                distributed: true
+              },
+            },
+            legend: { show: false },
+          },
         };
       }
       const chart = charts[result.name];
@@ -172,6 +192,8 @@ for (const entry of entries) {
       peakMemory[1].data.push(result.memory.peakExternal);
       peakMemory[2].data.push(result.memory.peakArrayBuffers);
       chart.peakMemory.xaxis.categories.push(label);
+      const diskUse = chart.diskUse.series[0].data;
+      diskUse.push({x: label, y: result.disk});
     }
   }
 }
