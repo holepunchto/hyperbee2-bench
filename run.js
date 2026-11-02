@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { writeResults } from "./lib/write.js";
 import { commitInfo } from "./lib/commit.js";
+import { randomGenerators } from "./lib/keygen.js";
 
 const dir = process.argv[2];
 if (!dir) {
@@ -23,24 +24,28 @@ console.log(`Package: ${name} v${version}`);
 console.log(`Runtime: ${process.title} ${process.version}`);
 console.log('');
 
-const groups = [];
+const results = [];
 
-function runBenchmark(filename) {
+function runBenchmark(filename, batchSize, rng) {
   return new Promise((resolve, reject) => {
     cluster.setupPrimary({
       exec: filename,
-      args: [dir],
+      args: [dir, batchSize, rng],
     });
     const worker = cluster.fork();
     worker.once('exit', resolve);
     worker.once('error', reject);
     worker.on('message', msg => {
-      groups.push(msg);
+      results.push(msg);
     });
   });
 }
 
-await runBenchmark('./benchmarks/insert.js');
-await runBenchmark('./benchmarks/delete.js');
+for (const rng of randomGenerators) {
+  for (const batchSize of [1000, 100, 1]) {
+    await runBenchmark('./benchmarks/insert.js', batchSize, rng.name);
+    await runBenchmark('./benchmarks/delete.js', batchSize, rng.name);
+  }
+}
 
-writeResults(name, version, commit, groups);
+writeResults(name, version, commit, results);
