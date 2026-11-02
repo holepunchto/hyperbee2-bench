@@ -26,11 +26,11 @@ console.log('');
 
 const results = [];
 
-function runBenchmark(filename, batchSize, rng) {
+function runBenchmark(filename, ...args) {
   return new Promise((resolve, reject) => {
     cluster.setupPrimary({
       exec: filename,
-      args: [dir, batchSize, rng],
+      args: [dir, ...args],
     });
     const worker = cluster.fork();
     worker.once('exit', resolve);
@@ -42,6 +42,7 @@ function runBenchmark(filename, batchSize, rng) {
 }
 
 for (const rng of randomGenerators) {
+  await runBenchmark('./benchmarks/get.js', rng.name);
   for (const batchSize of [1000, 100, 1]) {
     await runBenchmark('./benchmarks/insert.js', batchSize, rng.name);
     await runBenchmark('./benchmarks/delete.js', batchSize, rng.name);
