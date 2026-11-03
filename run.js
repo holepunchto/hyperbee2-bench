@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+
+import process from 'node:process';
+import cluster from 'node:cluster';
+import fs from 'node:fs';
+import path from 'node:path';
+import { writeResults } from "./lib/write.js";
+import { commitInfo } from "./lib/commit.js";
+import { randomGenerators } from "./lib/keygen.js";
+
+const dir = process.argv[2];
+if (!dir) {
+  console.error('Usage: ./run.js HYPERBEE2_REPO_PATH');
+  process.exit(1);
+}
+
+const packagePath = path.resolve(dir, 'package.json');
+const {name, version} = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+const commit = commitInfo(dir);
+
+console.log(`Running benchmarks for: ${dir}`);
+console.log(`Commit: ${commit.full}`);
+console.log(`Package: ${name} v${version}`);
+console.log(`Runtime: ${process.title} ${process.version}`);
+console.log('');
+
+const results = [];
+
+function runBenchmark(filename, ...args) {
+  return new Promise((resolve, reject) => {
+    cluster.setupPrimary({
+      exec: filename,
+      args: [dir, ...args],
+    });
+    const worker = cluster.fork();
+    worker.once('exit', resolve);
+    worker.once('error', reject);
+    worker.on('message', msg => {
+      results.push(msg);
+    });
+  });
+}
+
+for (const rng of randomGenerators) {
+  await runBenchmark('./benchmarks/get.js', rng.name);
+  await runBenchmark('./benchmarks/range.js', rng.name);
+  for (const batchSize of [1000, 100, 1]) {
+    await runBenchmark('./benchmarks/insert.js', batchSize, rng.name);
+    await runBenchmark('./benchmarks/delete.js', batchSize, rng.name);
+  }
+}
+
+writeResults(name, version, commit, results);
