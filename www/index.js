@@ -72,6 +72,8 @@ for (const entry of entries) {
       for (let i = 0; i < 16; i++) {
         keyCategories.push(i.toString(16));
       }
+      let totalKeys = 0;
+      for (let c of result.keyDistribution) totalKeys += c;
       charts[result.name] = {
         durations: {
           series: [
@@ -137,7 +139,7 @@ for (const entry of entries) {
             categories: keyCategories
           },
           yaxis: {
-            max: result.histogram.count
+            max: totalKeys,
           }
         },
         peakMemory: {
