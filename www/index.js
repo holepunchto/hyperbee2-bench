@@ -73,7 +73,7 @@ for (const entry of entries) {
         keyCategories.push(i.toString(16));
       }
       let totalKeys = 0;
-      for (let c of result.keyDistribution) totalKeys += c;
+      for (const c of result.keyDistribution) totalKeys += c;
       charts[result.name] = {
         durations: {
           series: [

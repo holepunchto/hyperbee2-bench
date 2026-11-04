@@ -42,12 +42,13 @@ function runBenchmark(filename, ...args) {
 }
 
 for (const rng of randomGenerators) {
-  await runBenchmark('./benchmarks/get.js', rng.name);
-  await runBenchmark('./benchmarks/range.js', rng.name);
-  for (const batchSize of [1000, 100, 1]) {
-    await runBenchmark('./benchmarks/insert.js', batchSize, rng.name);
-    await runBenchmark('./benchmarks/delete.js', batchSize, rng.name);
-  }
+  await runBenchmark('./benchmarks/get-replicator.js', rng.name);
+  // await runBenchmark('./benchmarks/get.js', rng.name);
+  // await runBenchmark('./benchmarks/range.js', rng.name);
+  // for (const batchSize of [1000, 100, 1]) {
+  //   await runBenchmark('./benchmarks/insert.js', batchSize, rng.name);
+  //   await runBenchmark('./benchmarks/delete.js', batchSize, rng.name);
+  // }
 }
 
 writeResults(name, version, commit, results);
