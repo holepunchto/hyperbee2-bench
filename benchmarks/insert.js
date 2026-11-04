@@ -14,8 +14,8 @@ for (const r of randomGenerators) {
 
 async function setup(sandbox, Corestore, Hyperbee) {
   const store = new Corestore(sandbox)
-  const core = store.get({ name: 'docindex' });
-  const bee = new Hyperbee(store, {core}); 
+  this.core = store.get({ name: 'docindex' });
+  const bee = new Hyperbee(store, {core: this.core}); 
   await bee.ready()
 
   this.store = store;

@@ -2,9 +2,6 @@ import path from 'node:path';
 import cluster from 'node:cluster';
 import { bench } from "../lib/bench.js";
 import { randomGenerators, KeyGenerator } from "../lib/keygen.js";
-import simulator from 'replication-simulator';
-
-const { Replicator, Network } = simulator;
 
 let rand;
 for (const r of randomGenerators) {
@@ -18,35 +15,22 @@ async function setup(sandbox, Corestore, Hyperbee) {
   this.result.keyGenerator = rand.name;
   this.keys = [];
   this.i = 0;
-  this.net = new Network()
 
   this.writerStore = new Corestore(path.join(sandbox, 'writer'));
   const writerCore = this.writerStore.get({ name: 'docindex' });
   await writerCore.ready()
 
   this.readerStore = new Corestore(path.join(sandbox, 'reader'));
-  const readerCore = this.readerStore.get({ key: writerCore.key });
+  const readerCore = this.writerStore.get({ name: 'docindex' });
   await readerCore.ready()
 
-  const swarm1 = this.net.swarm()
-  const swarm2 = this.net.swarm()
-
-  swarm1.on('connection', conn => writerCore.replicate(conn));
-  swarm2.on('connection', conn => readerCore.replicate(conn));
-
-  await swarm1.join(writerCore.discoveryKey)
-  await swarm2.join(readerCore.discoveryKey)
-
-  // TODO: this is set very slow for testing
-  this.interval = setInterval(() => this.net.tick(), 1000);
-
   this.writer = new Hyperbee(this.writerStore, {core: writerCore}); 
-  this.reader = new Hyperbee(this.readerStore, {
-    core: readerCore,
-    // key: writerCore.key,
-    writable: false,
-    wait: true,
-  });
+  this.reader = new Hyperbee(this.readerStore, {core: readerCore});
+
+  const s1 = this.writer.replicate(true)
+  const s2 = this.reader.replicate(false)
+
+  s1.pipe(s2).pipe(s1)
 
   for (let i = 0; i < 100; i++) {
     const batch = this.writer.write();
@@ -58,7 +42,7 @@ async function setup(sandbox, Corestore, Hyperbee) {
     await batch.flush();
   }
 
-  await this.net.flush();
+  this.bee = this.reader.checkout(this.writer.head());
 }
 
 async function teardown() {
@@ -77,7 +61,7 @@ const result = await bench({
   teardown,
   bucketSize: 100,
   async cycle() {
-    const result = await this.reader.get(this.keys[this.i++], {wait: true});
+    const result = await this.bee.get(this.keys[this.i++], {wait: true});
     if (!result) throw new Error('missing value');
   },
 });

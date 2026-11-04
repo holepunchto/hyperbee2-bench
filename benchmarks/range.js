@@ -10,7 +10,12 @@ for (const r of randomGenerators) {
   }
 }
 
-async function setup(store, bee, sandbox) {
+async function setup(sandbox, Corestore, Hyperbee) {
+  const store = new Corestore(sandbox)
+  this.core = store.get({ name: 'docindex' });
+  const bee = new Hyperbee(store, {core: this.core}); 
+  await bee.ready()
+
   this.store = store;
   this.bee = bee;
   this.keygen = new KeyGenerator(rand.generate);
@@ -30,11 +35,18 @@ async function setup(store, bee, sandbox) {
   this.result.keyDistribution = this.keygen.buckets;
 }
 
+async function teardown() {
+  this.result.coreSize = (await this.core.info()).byteLength;
+  await this.bee.close();
+  await this.store.close();
+}
+
 const result = await bench({
   name: `[Range] iterate over all keys, ${rand.name} key generator (100k keys)`,
   count: 100,
   warmup: 20,
   setup,
+  teardown,
   bucketSize: 100000,
   async cycle() {
     let count = 0

@@ -258,8 +258,17 @@ for (const entry of entries) {
     chart.peakMemory.xaxis.categories.push(label);
     const diskUse = chart.diskUse.series[0].data;
     diskUse.push({x: label, y: result.disk});
-    const coreSize = chart.coreSize.series[0].data;
-    coreSize.push({x: label, y: result.coreSize});
+    if (result.coreSize) {
+      const coreSize = chart.coreSize.series[0].data;
+      coreSize.push({x: label, y: result.coreSize});
+    }
+  }
+}
+
+// remove core size charts with no data
+for (const k in charts) {
+  if (charts[k].coreSize.series[0].data.length === 0) {
+    delete charts[k].coreSize;
   }
 }
 
