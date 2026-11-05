@@ -59,7 +59,7 @@ const result = await bench({
   warmup: 0,
   setup,
   teardown,
-  bucketSize: 100,
+  bucketSize: 500000,
   async cycle() {
     const result = await this.bee.get(this.keys[this.i++], {wait: true});
     if (!result) throw new Error('missing value');
