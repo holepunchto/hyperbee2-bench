@@ -15,6 +15,8 @@ for (const r of randomGenerators) {
 
 const initialCount = 120_000;
 
+const ordered = process.argv[5] === 'ordered';
+
 async function setup(sandbox, Corestore, Hyperbee) {
   const store = new Corestore(sandbox)
   this.core = store.get({ name: 'docindex' });
@@ -35,6 +37,10 @@ async function setup(sandbox, Corestore, Hyperbee) {
     batch.tryPut(key, key);
   }
   await batch.flush();
+  if (ordered) {
+    this.keys.sort();
+  }
+  this.keyIndex = 0;
 
   this.ops = 0;
   this.batch = this.bee.write();
@@ -62,7 +68,7 @@ async function teardown() {
 }
 
 const result = await bench({
-  name: `[Delete] ${rand.name} key generator, batch size = ${batchSize}`,
+  name: `[Delete] ${ordered ? 'sorted' : 'random'} order, ${rand.name} key generator, batch size = ${batchSize}`,
   count: 100_000,
   warmup: 20_000,
   setup,
@@ -74,7 +80,7 @@ const result = await bench({
   }[batchSize]),
   async cycle() {
     await this.withBatch(batchSize, batch => {
-      const key = this.keys.pop();
+      const key = this.keys[this.keyIndex++];
       batch.tryDelete(key, key);
     });
   },

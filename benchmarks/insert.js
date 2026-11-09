@@ -61,7 +61,7 @@ async function teardown() {
 }
 
 const result = await bench({
-  name: `[Insert] ${rand.name} key generator, ${ordered ? 'sorted' : 'random'} order, batch size = ${batchSize}`,
+  name: `[Insert] ${ordered ? 'sorted' : 'random'} order, ${rand.name} key generator, batch size = ${batchSize}`,
   count: 100_000,
   warmup: 20_000,
   setup,

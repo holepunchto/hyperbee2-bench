@@ -48,7 +48,8 @@ for (const rng of randomGenerators) {
   for (const batchSize of [1000, 100, 1]) {
     await runBenchmark('./benchmarks/insert.js', batchSize, rng.name, 'random');
     await runBenchmark('./benchmarks/insert.js', batchSize, rng.name, 'ordered');
-    await runBenchmark('./benchmarks/delete.js', batchSize, rng.name);
+    await runBenchmark('./benchmarks/delete.js', batchSize, rng.name, 'random');
+    await runBenchmark('./benchmarks/delete.js', batchSize, rng.name, 'ordered');
   }
 }
 
