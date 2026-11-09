@@ -3,6 +3,8 @@ import cluster from 'node:cluster';
 import { bench } from "../lib/bench.js";
 import { randomGenerators, KeyGenerator } from "../lib/keygen.js";
 
+const warmup = 20_000;
+const count = 100_000;
 const batchSize = process.argv[3];
 
 let rand;
@@ -11,6 +13,8 @@ for (const r of randomGenerators) {
     rand = r;
   }
 }
+
+const ordered = process.argv[5] === 'ordered';
 
 async function setup(sandbox, Corestore, Hyperbee) {
   const store = new Corestore(sandbox)
@@ -32,6 +36,14 @@ async function setup(sandbox, Corestore, Hyperbee) {
   };
 
   this.keygen = new KeyGenerator(rand.generate);
+  this.keys = [];
+  for (let i = 0; i < warmup + count; i++) {
+    this.keys[i] = this.keygen.generateBytes(32);
+  }
+  if (ordered) {
+    this.keys.sort();
+  }
+  this.keyIndex = 0;
   this.result.keyGenerator = rand.name;
 }
 
@@ -49,7 +61,7 @@ async function teardown() {
 }
 
 const result = await bench({
-  name: `[Insert] ${rand.name} key generator, batch size = ${batchSize}`,
+  name: `[Insert] ${rand.name} key generator, ${ordered ? 'sorted' : 'random'} order, batch size = ${batchSize}`,
   count: 100_000,
   warmup: 20_000,
   setup,
@@ -61,7 +73,7 @@ const result = await bench({
   }[batchSize]),
   async cycle() {
     await this.withBatch(batchSize, batch => {
-      const key = this.keygen.generateBytes(32);
+      const key = this.keys[this.keyIndex++];
       batch.tryPut(key, key);
     });
   },
