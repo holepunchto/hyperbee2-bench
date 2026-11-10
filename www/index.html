@@ -9,9 +9,23 @@
     </head>
     <body>
         <h1>Hyperbee benchmarks</h1>
-        <h2>Comparing runs</h2>
-        <div id="comparing"></div>
-        <h2>Results</h2>
-        <div id="charts"></div>
+        <details open>
+            <summary>Config</summary>
+            <form id="config-form">
+                <section>
+                    <h3>Runs</h3>
+                    <div id="runs"></div>
+                </section>
+                <section>
+                    <h3>Benchmarks</h3>
+                    <div id="benchmarks"></div>
+                </section>
+                <button type="submit">Update results</button>
+            </form>
+        </details>
+        <details open>
+            <summary>Results</summary>
+            <div id="charts"></div>
+        </details>
     </body>
 </html>
