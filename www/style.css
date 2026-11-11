@@ -1,0 +1,83 @@
+html {
+    font-family: sans-serif;
+    width: 92ch;
+    margin: 3em auto;
+}
+
+h2 {
+    font-size: 120%;
+    margin: 3em 0;
+}
+summary {
+    line-height: 2;
+    font-size: 120%;
+    font-weight: bold;
+    user-select: none;
+    cursor: pointer;
+}
+details {
+    margin: 1em 0;
+}
+
+h3 {
+    font-weight: bold;
+    font-size: 100%;
+    margin: 2em 0;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: fit-content(40%) auto;
+    grid-column-gap: 2em;
+}
+
+dt {
+    margin: 0;
+}
+
+dd {
+    margin: 0;
+}
+
+section {
+    padding: 1em;
+    margin: 1em;
+    border: 1px solid #ccc;
+}
+
+h3 {
+    background: #eee;
+    border-bottom: 1px solid #ccc;
+    display: block;
+    margin: -1em -1em 1em -1em;
+    padding: 1em;
+}
+
+.benchmark-run, .benchmark-name {
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+    gap: 1em;
+    margin: 1em 0;
+}
+
+.benchmark-run dl {
+    margin: 0;
+}
+
+#config-form button[type=submit] {
+    margin: 1em;
+}
+
+.loading {
+    display: none;
+}
+.loaded {
+    display: block;
+}
+body.loading .loading {
+    display: block;
+}
+body.loading .loaded {
+    display: none;
+}

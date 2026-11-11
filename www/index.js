@@ -1,0 +1,365 @@
+import index from "./results/index" with { type: 'text' };
+import {formatNanoseconds, humanizeBytes} from "./util.js";
+
+const MAX_FILES = 10;
+const FORMAT = 5;
+
+const entries = [];
+
+const files = index
+  // Remove empty lines
+  .replace(/\n+/g, '\n')
+  .replace(/^\n|\n$/g, '')
+  // Split lines
+  .split('\n')
+  // Take last MAX_FILES entries
+  .slice(-MAX_FILES);
+
+for (const f of files) {
+  const url = `./results/${f}`;
+  const res = await fetch(url);
+  if (res.status !== 200) {
+    console.warn(`Skipping file in index ${url} (status code ${res.status})`);
+    continue;
+  }
+  const data = await res.json();
+  // Skip incompatible file formats
+  if (data.format === FORMAT) {
+    data.show = true;
+    entries.push(data);
+  } else {
+    console.warn(`Skipping incompatible file format ${url} (version ${data.format})`);
+  }
+}
+
+const chartsDiv = document.getElementById('charts');
+const form = document.getElementById('config-form');
+const runs = document.getElementById('runs');
+const benchmarks = document.getElementById('benchmarks');
+
+const labelToEntry = new Map();
+let hiddenBenchmarks = new Set();
+
+form.addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  for (const [label, entry] of labelToEntry) {
+    const input = label.querySelector('input');
+    entry.show = input.checked;
+  }
+  hiddenBenchmarks = new Set();
+  for (const label of benchmarks.querySelectorAll('.benchmark-name')) {
+    const input = label.querySelector('input');
+    if (!input.checked) {
+      hiddenBenchmarks.add(label.querySelector('.name').textContent);
+    }
+  }
+  clearCharts();
+  setTimeout(updateCharts, 0);
+});
+
+for (const entry of entries) {
+  const label = document.createElement('label');
+  label.className = 'benchmark-run';
+  labelToEntry.set(label, entry);
+  runs.appendChild(label);
+
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.checked = true;
+  label.appendChild(input);
+
+  const dl = document.createElement('dl');
+  label.appendChild(dl);
+
+  function metadata(key, value) {
+    const dt = document.createElement('dt');
+    dt.textContent = key + ':';
+    dl.appendChild(dt);
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    dl.appendChild(dd);
+  }
+
+  metadata('Runtime', `${entry.runtime.name} ${entry.runtime.version}`);
+  metadata('Package', `${entry.package.name} v${entry.package.version}`);
+  metadata('Commit', entry.commit.full)
+  metadata('Date', entry.date)
+}
+
+const benchmarkNames = new Set();
+for (const entry of entries) {
+  for (const result of entry.results) {
+    benchmarkNames.add(result.name);
+  }
+}
+
+for (const name of Array.from(benchmarkNames).toSorted()) {
+  const label = document.createElement('label');
+  label.className = 'benchmark-name';
+  benchmarks.appendChild(label);
+
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.checked = true;
+  label.appendChild(input);
+
+  const div = document.createElement('div');
+  div.className = 'name';
+  div.textContent = name;
+  label.appendChild(div);
+}
+
+// TODO: repeated in lib/util.js
+function zeroPad(s, n) {
+  s = '' + s
+  n -= s.length
+  while (n > 0) {
+    s = '0' + s
+    n--;
+  }
+  return s;
+}
+
+function clearCharts() {
+  document.getElementById('charts-loading').style.display = 'block';
+  chartsDiv.innerHTML = '';
+}
+
+function updateCharts() {
+  clearCharts();
+  const charts = {};
+
+  for (const entry of entries) {
+    if (!entry.show) {
+      continue;
+    }
+    for (const result of entry.results) {
+      if (hiddenBenchmarks.has(result.name)) {
+        continue;
+      }
+      if (!(result.name in charts)) {
+        const keyCategories = [];
+        for (let i = 0; i < 16; i++) {
+          keyCategories.push(i.toString(16));
+        }
+        let totalKeys = 0;
+        for (const c of result.keyDistribution) totalKeys += c;
+        charts[result.name] = {
+          durations: {
+            series: [
+              {
+                name: 'Operation time',
+                data: [],
+              },
+            ],
+            chart: {
+              type: 'violin',
+              height: 350,
+            },
+            title: {
+              text: 'Operation time',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: true,
+                // Give each catgory its own color
+                distributed: true
+              },
+              violin: {
+                // scale each violin to its own peak regardless of sample size
+                normalize: 'group',
+                points: {
+                  // do not plot individual points on top
+                  show: false,
+                }
+              },
+            },
+            legend: { show: false },
+            xaxis: {
+              labels: {
+                formatter: formatNanoseconds,
+              }
+            },
+            dataLabels: {
+              formatter: formatNanoseconds,
+            },
+            tooltip: {
+              enabled: false,
+            },
+          },
+          keyDistribution: {
+            series: [
+              {
+                name: 'Keys starting with nibble',
+                data: result.keyDistribution,
+                color: '#cccccc',
+              }
+            ],
+            title: {
+              text: 'Key distribution (first nibble)'
+            },
+            chart: {
+              type: 'bar',
+              height: 350,
+            },
+            dataLabels: {
+              enabled: false,
+            },
+            xaxis: {
+              categories: keyCategories
+            },
+            yaxis: {
+              max: totalKeys,
+            }
+          },
+          peakMemory: {
+            series: [
+              { name: 'Max heap used', data: [], },
+              { name: 'Max external', data: [], },
+              { name: 'Max array buffers', data: [], },
+            ],
+            xaxis: {
+              categories: [],
+              labels: {
+                formatter: humanizeBytes,
+              }
+            },
+            dataLabels: {
+              formatter: humanizeBytes,
+            },
+            tooltip: {
+              y: {
+                formatter: humanizeBytes,
+              },
+            },
+            chart: {
+              type: 'bar',
+              height: 350,
+              stacked: true,
+            },
+            title: {
+              text: 'Peak memory use in each category',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: true,
+                // Give each catgory its own color
+                // distributed: true
+              },
+            },
+            legend: { show: false },
+          },
+          coreSize: {
+            series: [
+              { name: 'Core size', data: [], },
+            ],
+            chart: {
+              type: 'bar',
+              height: 350,
+            },
+            title: {
+              text: 'Core size',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: true,
+                // Give each catgory its own color
+                distributed: true
+              },
+            },
+            legend: { show: false },
+            xaxis: {
+              labels: {
+                formatter: humanizeBytes,
+              }
+            },
+            dataLabels: {
+              formatter: humanizeBytes,
+            },
+            tooltip: {
+              y: {
+                formatter: humanizeBytes,
+              },
+            },
+          },
+          diskUse: {
+            series: [
+              { name: 'Disk use', data: [], },
+            ],
+            chart: {
+              type: 'bar',
+              height: 350,
+            },
+            title: {
+              text: 'Disk use',
+            },
+            plotOptions: {
+              bar: {
+                horizontal: true,
+                // Give each catgory its own color
+                distributed: true
+              },
+            },
+            legend: { show: false },
+            xaxis: {
+              labels: {
+                formatter: humanizeBytes,
+              }
+            },
+            dataLabels: {
+              formatter: humanizeBytes,
+            },
+            tooltip: {
+              y: {
+                formatter: humanizeBytes,
+              },
+            },
+          },
+        };
+      }
+      const chart = charts[result.name];
+      const durations = chart.durations.series[0].data;
+      const label = `${entry.package.version} (${entry.commit.short})`;
+      durations.push({x: label, y: { density: result.buckets }});
+      const peakMemory = chart.peakMemory.series;
+      peakMemory[0].data.push(result.memory.peakHeapUsed);
+      peakMemory[1].data.push(result.memory.peakExternal);
+      peakMemory[2].data.push(result.memory.peakArrayBuffers);
+      chart.peakMemory.xaxis.categories.push(label);
+      const diskUse = chart.diskUse.series[0].data;
+      diskUse.push({x: label, y: result.disk});
+      if (result.coreSize) {
+        const coreSize = chart.coreSize.series[0].data;
+        coreSize.push({x: label, y: result.coreSize});
+      }
+    }
+  }
+
+  // remove core size charts with no data
+  for (const k in charts) {
+    if (charts[k].coreSize.series[0].data.length === 0) {
+      delete charts[k].coreSize;
+    }
+  }
+
+  for (const name in charts) {
+    const section = document.createElement('section');
+    const h3 = document.createElement('h3');
+    h3.textContent = name;
+    section.appendChild(h3);
+    chartsDiv.appendChild(section);
+    for (const options of Object.values(charts[name])) {
+      const el = document.createElement('div');
+      section.appendChild(el);
+      const c = new ApexCharts(el, options);
+      c.render();
+    }
+  }
+
+  document.getElementById('charts-loading').style.display = 'none';
+}
+
+updateCharts();
+
+document.getElementById('loading').remove();
+document.getElementById('loaded').style.display = 'block';

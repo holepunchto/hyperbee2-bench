@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "delay-stream": "^0.0.3",
+    "replication-simulator": "^3.0.0"
+  }
+}
