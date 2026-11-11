@@ -9,23 +9,27 @@
     </head>
     <body>
         <h1>Hyperbee benchmarks</h1>
-        <details open>
-            <summary>Config</summary>
-            <form id="config-form">
-                <section>
-                    <h3>Runs</h3>
-                    <div id="runs"></div>
-                </section>
-                <section>
-                    <h3>Benchmarks</h3>
-                    <div id="benchmarks"></div>
-                </section>
-                <button type="submit">Update results</button>
-            </form>
-        </details>
-        <details open>
-            <summary>Results</summary>
-            <div id="charts"></div>
-        </details>
+        <p id="loading">Loading&hellip;</div>
+        <div id="loaded" style="display: none;">
+            <details>
+                <summary>Config</summary>
+                <form id="config-form">
+                    <section>
+                        <h3>Runs</h3>
+                        <div id="runs"></div>
+                    </section>
+                    <section>
+                        <h3>Benchmarks</h3>
+                        <div id="benchmarks"></div>
+                    </section>
+                    <button type="submit">Filter results</button>
+                </form>
+            </details>
+            <details open>
+                <summary>Results</summary>
+                <p id="charts-loading">Loading&hellip;</p>
+                <div id="charts"></div>
+            </details>
+        </div>
     </body>
 </html>

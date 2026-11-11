@@ -68,3 +68,16 @@ h3 {
 #config-form button[type=submit] {
     margin: 1em;
 }
+
+.loading {
+    display: none;
+}
+.loaded {
+    display: block;
+}
+body.loading .loading {
+    display: block;
+}
+body.loading .loaded {
+    display: none;
+}

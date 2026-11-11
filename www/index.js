@@ -53,7 +53,8 @@ form.addEventListener('submit', (ev) => {
       hiddenBenchmarks.add(label.querySelector('.name').textContent);
     }
   }
-  updateCharts();
+  clearCharts();
+  setTimeout(updateCharts, 0);
 });
 
 for (const entry of entries) {
@@ -119,9 +120,13 @@ function zeroPad(s, n) {
   return s;
 }
 
-function updateCharts() {
-  console.log('hiddenBenchmarks', hiddenBenchmarks);
+function clearCharts() {
+  document.getElementById('charts-loading').style.display = 'block';
   chartsDiv.innerHTML = '';
+}
+
+function updateCharts() {
+  clearCharts();
   const charts = {};
 
   for (const entry of entries) {
@@ -350,6 +355,11 @@ function updateCharts() {
       c.render();
     }
   }
+
+  document.getElementById('charts-loading').style.display = 'none';
 }
 
 updateCharts();
+
+document.getElementById('loading').remove();
+document.getElementById('loaded').style.display = 'block';
